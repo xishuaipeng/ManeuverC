@@ -1,0 +1,23 @@
+#Marks Used
+Turn_Sign_on_Road
+Traffic_light
+No_line
+Praking_lot_plaza
+Praking_lot_garage
+Praking_lot_gas
+Intersection_stop
+Intersection_light
+Merge
+Stop_Sign
+Intersection
+On_Road
+No_Intersection
+No_Traffic
+Less_Traffic
+Mid_Traffic
+Community
+Exit_Freeway
+Lane_End
+Yellow_lane
+Road_work
+Sign_Board
