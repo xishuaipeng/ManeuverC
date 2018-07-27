@@ -64,7 +64,7 @@ class Inception_v3(Encoder):
         arg_scope = slimNet.inception.inception_v3_arg_scope()
         is_train = tf.placeholder(tf.bool,shape=[], name='is_train_BN')
         with slim.arg_scope(arg_scope):
-            with slim.arg_scope([layers_lib.batch_norm, layers_lib.dropout], is_training =is_train)
+            with slim.arg_scope([layers_lib.batch_norm, layers_lib.dropout], is_training =is_train):
                 _, end_points = slimNet.inception.inception_v3_base(inputs)
         self.end_points = end_points
         self.end_points['Inputs'] = inputs

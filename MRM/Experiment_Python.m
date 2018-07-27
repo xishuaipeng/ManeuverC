@@ -8,8 +8,8 @@ label = [];
 tic;
 for i =1:length(videoName)
     sprintf('%s is processing!',videoName{i})
-    input_path = 'D:\xishuaip\TRIDataset';
-    out_path = 'D:\xishuaip\TriOut';
+    input_path = '..\..\Dataset';
+    out_path = '..\..\Out';
     checkFile = sprintf('%s/%s/%s.list',input_path,videoName{i}, videoName{i});
 %     disp( remove_mat(fullfile(out_path,videoName{i}),...
 %     {'vggScene.mat';'vggObject.mat';'seqX_0.050000_0.004000_0.100000_0.020000.mat';...

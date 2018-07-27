@@ -87,6 +87,7 @@ class Classical_Attention(Attention):
         self.n_class = n_class
         self.n_hidden = n_hidenn
         label_layer = tf.placeholder(tf.int32, [None,])
+        
         [T,W,H,C] = feature_layer.shape
         self.T = T
         self.L = W*H
