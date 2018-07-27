@@ -8,7 +8,7 @@ label = [];
 tic;
 for i =1:length(videoName)
     sprintf('%s is processing!',videoName{i})
-    input_path = '..\..\Dataset';
+    input_path = '..\..\TRIDataset';
     out_path = '..\..\Out';
     checkFile = sprintf('%s/%s/%s.list',input_path,videoName{i}, videoName{i});
 %     disp( remove_mat(fullfile(out_path,videoName{i}),...
