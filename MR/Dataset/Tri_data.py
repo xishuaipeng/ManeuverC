@@ -37,7 +37,8 @@ class Tri_data (Base_data):
     def decoder(self,data):
         data_field = ['frame', 'signal','path','label','session']
         frame_list = np.squeeze(data['frame'].astype(np.int)).tolist()
-        frame_path = ''.join(data['path'][0][0][0])
+        # frame_path = ''.join(data['path'][0][0][0])
+        frame_path = self.data_dir
         front_img_list = list(map(lambda x, y = frame_path: os.path.join(y,'%d_f.jpg'%x) , frame_list))
         driver_img_list = list(map(lambda x, y = frame_path: os.path.join(y,'%d_d.jpg'%x) , frame_list))
         signal = np.squeeze(data['signal']) 
