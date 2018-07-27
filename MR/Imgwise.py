@@ -17,7 +17,7 @@ def data_process(im_shape=0):
 def main():
 
     data_list = ['ID001_T001', 'ID001_T002']# ,
-    data_dir = 'D:\\xishuaip\\TriOut'
+    data_dir = '..\..\Out'
     im_shape = [480,640,3]
     train_data = Tri_data(data_dir , data_list, quiet=True)
     train_data.encoder()
@@ -26,7 +26,8 @@ def main():
         img_str, frame = data_process(im_shape)
         encoder, decoder = model_factory('Inception_v3')
         T =31
-        input_layer, feature_layer = encoder.back_bone([1, im_shape[0],im_shape[1],im_shape[2]])
+        input_layer, feature_layer, is_train = encoder.back_bone([1, im_shape[0],im_shape[1],im_shape[2]])
+
         [_,w,h,d] = feature_layer.shape
         feature_input_layer = tf.placeholder(tf.float32,shape = [T,w,h,d], name='CNN_Features')
         pred_layer ,gtruth_layer ,attention_layer  = decoder.build( feature_input_layer,  n_hidenn = 100, n_class = 5 )
@@ -35,7 +36,7 @@ def main():
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
         for epoch in range(500):
-            saver.save(sess, '../../Backup/M726',global_step = epoch)
+            saver.save(sess, '..\..\Backup\M726',global_step = epoch)
             mean_loss = 0.0
             total_case = 0.0
             while(True):
@@ -48,7 +49,7 @@ def main():
                     [fimg,dimg] = list(map(lambda f: open(f,'rb').read(), [fimg,dimg]))
                     fimg = sess.run(frame, feed_dict={img_str: fimg})
                     # dimg = sess.run(frame, feed_dict={img_str: dimg})
-                    fimg = sess.run(feature_layer, feed_dict={input_layer: [fimg]})
+                    fimg = sess.run(feature_layer, feed_dict={input_layer: [fimg], is_train: False})
                     seq_fimg.extend(fimg)
                 seq_fimg = np.stack(seq_fimg)
                 _loss, _ = sess.run(( loss, train_op), feed_dict={feature_input_layer: seq_fimg, gtruth_layer: [label]})
