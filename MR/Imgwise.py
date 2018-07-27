@@ -27,14 +27,17 @@ def main():
         encoder, decoder = model_factory('Inception_v3')
         T =31
         input_layer, feature_layer = encoder.back_bone([1, im_shape[0],im_shape[1],im_shape[2]])
-
         [_,w,h,d] = feature_layer.shape
         feature_input_layer = tf.placeholder(tf.float32,shape = [T,w,h,d], name='CNN_Features')
         pred_layer ,gtruth_layer ,attention_layer  = decoder.build( feature_input_layer,  n_hidenn = 100, n_class = 5 )
         loss, train_op = Train_Op().build('Ssoftmax','AdamOptimizer',1e-3,pred_layer,gtruth_layer)
         encoder.load_model(sess)
         sess.run(tf.global_variables_initializer())
+        saver = tf.train.Saver()
         for epoch in range(500):
+            saver.save(sess, '../../Backup/M726',global_step = epoch)
+            mean_loss = 0.0
+            total_case = 0.0
             while(True):
                 seq_data, end_epoch = train_data.next(shuffle=True)
                 if end_epoch:
@@ -49,8 +52,10 @@ def main():
                     seq_fimg.extend(fimg)
                 seq_fimg = np.stack(seq_fimg)
                 _loss, _ = sess.run(( loss, train_op), feed_dict={feature_input_layer: seq_fimg, gtruth_layer: [label]})
+                mean_loss = mean_loss+ _loss
+                total_case =total_case + 1
 
-            print('mean loss : %f'%_loss)
+            print('mean loss : %f'%(mean_loss/total_case))
 
 
 
