@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from  Dataset.Tri_data import Tri_data
+from  Dataset import data_factory
 from Encoder.Model_Zoo import Model_Zoo
 from Train.Train_Op import Train_Op
 import cv2
@@ -18,31 +18,28 @@ def main():
 
     data_list = ['ID001_T001', 'ID001_T002']# ,
     data_dir = '..\..\Out'
-    im_shape = [480,640,3]
-    train_data = Tri_data(data_dir , data_list, quiet=True)
-    train_data.encoder()
+    im_shape = [140,320,3]
+    train_data = data_factory('TRI', data_dir=data_dir  , data_list= data_list, quiet=True)
     model_factory  = Model_Zoo()
     with tf.Session() as sess:
         img_str, frame = data_process(im_shape)
         encoder, decoder = model_factory('Inception_v3')
         T =31
         input_layer, feature_layer, is_train = encoder.back_bone([1, im_shape[0],im_shape[1],im_shape[2]])
-
         [_,w,h,d] = feature_layer.shape
         feature_input_layer = tf.placeholder(tf.float32,shape = [T,w,h,d], name='CNN_Features')
         pred_layer ,gtruth_layer ,attention_layer  = decoder.build( feature_input_layer,  n_hidenn = 100, n_class = 5 )
         loss, train_op = Train_Op().build('Ssoftmax','AdamOptimizer',1e-3,pred_layer,gtruth_layer)
-        encoder.load_model(sess)
         sess.run(tf.global_variables_initializer())
+        encoder.load_model(sess)
         saver = tf.train.Saver()
         for epoch in range(500):
             saver.save(sess, '..\..\Backup\M726',global_step = epoch)
             mean_loss = 0.0
             total_case = 0.0
             while(True):
-                seq_data, end_epoch = train_data.next(shuffle=True)
-                if end_epoch:
-                    break
+                seq_data, restart = train_data.next(shuffle=False)
+                seq_data = seq_data[0]
                 label = seq_data['label']
                 seq_fimg = []
                 for fimg, dimg  in zip(seq_data['fimg'], seq_data['dimg']):
@@ -55,6 +52,8 @@ def main():
                 _loss, _ = sess.run(( loss, train_op), feed_dict={feature_input_layer: seq_fimg, gtruth_layer: [label]})
                 mean_loss = mean_loss+ _loss
                 total_case =total_case + 1
+                if restart:
+                    break
 
             print('mean loss : %f'%(mean_loss/total_case))
 

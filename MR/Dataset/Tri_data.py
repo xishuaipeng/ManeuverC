@@ -5,6 +5,10 @@ import csv
 import numpy as np
 import h5py
 import hdf5storage
+
+
+
+
 class Tri_data (Base_data): 
 
     def __init__( self, data_dir, session_id_list,  quiet = False):
