@@ -64,8 +64,8 @@ class Inception_v3(Encoder):
         arg_scope = slimNet.inception.inception_v3_arg_scope()
         is_train = tf.placeholder(tf.bool,shape=[], name='is_train_BN')
         with slim.arg_scope(arg_scope):
-            with slim.arg_scope([layers_lib.batch_norm, layers_lib.dropout], is_training =is_train):
-                _, end_points = slimNet.inception.inception_v3_base(inputs)
+            # with slim.arg_scope():#[layers_lib.batch_norm, layers_lib.dropout],
+            _, end_points = slimNet.inception.inception_v3(inputs,10, is_training =is_train)
         self.end_points = end_points
         self.end_points['Inputs'] = inputs
         self.end_points['is_train']  = is_train
@@ -87,7 +87,19 @@ class Inception_v3(Encoder):
             except:
                 print('Failed to restore model from %s' % self.model_path)
 
-    def back_bone(self,input_shape ):
+    def last_map(self,input_shape ):
         self.build(input_shape)
         # [n,w,h,c] = self.end_points['Mixed_7c']
         return self.end_points['Inputs'], self.end_points['Mixed_7c'], self.end_points['is_train']
+    
+    def last_feature(self,input_shape ):
+        self.build(input_shape)
+        # [n,w,h,c] = self.end_points['Mixed_7c']
+        return self.end_points['Inputs'], self.end_points['PreLogits'], self.end_points['is_train']
+
+def encoder_factory(name = 'Inception_v3'):
+    encoder = None
+    if name == 'Inception_v3':
+        encoder= Inception_v3()
+    assert (encoder!=None)
+    return encoder

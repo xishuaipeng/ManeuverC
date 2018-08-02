@@ -102,8 +102,6 @@ class TRI (Base_data):
     def next(self, reset=False, shuffle = False, unit = 'seq'):
         if self.n_evt == 0:
             self._encode(unit=unit)
-        print(self.n_evt)
-        print(self.n_seq)
         assert (self.n_evt > 0) & (self.n_seq > 0)
         if len(self.loop_list)==0 | reset:
             if unit =='seq':
@@ -118,14 +116,7 @@ class TRI (Base_data):
         if unit =='seq':
             evt_index, re_seq_index = self._hashfun(cur_index)
             seq_list = self.evt_seq[evt_index]
-            print(cur_index)
-            # print(self.hash_list)
-            print(evt_index)
-            print(len(seq_list))
-            print(-re_seq_index)
             cur_path = [seq_list[-re_seq_index]]
-
-
         else:
             cur_path = self.evt_seq[cur_index]
         
