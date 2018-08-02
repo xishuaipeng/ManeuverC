@@ -50,6 +50,7 @@ def train():
                     batch_label = batch_data['label']
 
                 else:
+                    print(evt_data[0]['mat_path'])
                     for  seq_data in tqdm(evt_data):
                         label = seq_data['label']
                         batch_label.extend([label])

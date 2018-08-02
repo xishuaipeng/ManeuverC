@@ -94,7 +94,7 @@ class TRI (Base_data):
         driver_img_list = list(map(lambda x, y = frame_path: os.path.join(y,'%d_d.jpg'%x) , frame_list))
         signal = np.squeeze(data['signal']) 
         label = np.squeeze(data['label']['sequenceLabel']).tolist()
-        dic = {'fimg':front_img_list,'dimg':driver_img_list,'signal': signal, 'label':label}
+        dic = {'fimg':front_img_list,'dimg':driver_img_list,'signal': signal, 'label':label,'mat_path':mat_path}
         return dic
 
 
