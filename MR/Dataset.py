@@ -118,12 +118,13 @@ class TRI (Base_data):
             seq_list = self.evt_seq[evt_index]
             cur_path = [seq_list[-re_seq_index]]
         else:
-            cur_path = self.evt_seq[cur_index]
+            evt_index = cur_index
+            cur_path = self.evt_seq[evt_index]
         
         loop_data = []
         for mat_path in cur_path:
             loop_data.append(self._decode(mat_path = mat_path))
-        return  loop_data, len(self.loop_list)==0 
+        return  loop_data, len(self.loop_list)==0 , evt_index
 
 def data_factory(name, **kwargs):
     if name == 'TRI':

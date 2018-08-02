@@ -213,7 +213,7 @@ methods
           end
           eventFrame(sum(eventFrame,2)==0,:)=[];
           eventFrame = array2table(eventFrame);
-          eventFrame.Properties.VariableNames ={'StartTime','EndTime', event_field{:}};
+          eventFrame.Properties.VariableNames ={'StartFrame','EndFrame', event_field{:}};
     end  
     
              

@@ -1,14 +1,17 @@
 clear,clc;
 close all;
 addpath('./DataClass', './DataClass/OBDExtraction','./Feature', './Evaluation','./Train','./Util')
-videoName = {'ID001_T001','ID001_T002',...
-   };
+videoName = {'ID001_T001','ID001_T002','ID001_T003','ID001_T004',...
+            'ID001_T009','ID001_T010','ID001_T011','ID001_T012',...
+            'ID001_T013','ID001_T014','ID001_T015','ID001_T016',...
+            'ID001_T017','ID001_T018','ID001_T019'...
+};
 data = [];
 label = [];
 tic;
 for i =1:length(videoName)
     sprintf('%s is processing!',videoName{i})
-    input_path = '..\..\TRIDataset';
+    input_path = '..\..\Dataset';
     out_path = '..\..\Out';
     checkFile = sprintf('%s/%s/%s.list',input_path,videoName{i}, videoName{i});
 %     disp( remove_mat(fullfile(out_path,videoName{i}),...

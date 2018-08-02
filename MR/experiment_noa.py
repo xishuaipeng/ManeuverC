@@ -4,7 +4,6 @@ import numpy as np
 from  Dataset import data_factory
 from Encoder import encoder_factory
 from Decoder import decoder_factory
-from Train.Train_Op import Train_Op
 from  tqdm import tqdm
 import cv2
 
@@ -18,10 +17,9 @@ def data_process(im_shape=0):
 
 
 def train():
-    data_list = ['ID001_T001', 'ID001_T002', ]# ,
+    data_list = ['ID001_T001', 'ID001_T002', 'ID001_T003','ID001_T004','ID001_T009', 'ID001_T010']# ,
     data_dir = '..\..\Out'
     im_shape = [299,299,3]
-    batch_size = 2
     time_step = 31
     train_data = data_factory('TRI', data_dir=data_dir , data_list= data_list, quiet=True)
     with tf.Session() as sess:
@@ -41,24 +39,35 @@ def train():
             total_num = 0.0
             
             while True:
-                evt_data, restart = train_data.next(shuffle=True,unit='evt')
+                evt_data, restart, evt_index = train_data.next(shuffle=True,unit='evt')
                 batch_features = []
                 batch_label = []
-                for  seq_data in tqdm(evt_data):
-                    label = seq_data['label']
-                    batch_label.extend([label])
-                    seq_features = []
-                    for fimg_path in seq_data['fimg']:
-                        fimg = open(fimg_path,'rb').read() 
-                        fimg = sess.run(frame, feed_dict={img_str: fimg})
-                        feature = sess.run(_feature, feed_dict={_input: [fimg], _train: False})
-                        seq_features.append(np.squeeze(feature))
-                    batch_features.append(np.stack(seq_features))
+                event_np = os.path.join(data_dir, '%d.npy'%evt_index)
+     
+                if os.path.isfile(event_np):
+                    batch_data = np.load(event_np).item()
+                    batch_features = batch_data['data']
+                    batch_label = batch_data['label']
+
+                else:
+                    for  seq_data in tqdm(evt_data):
+                        label = seq_data['label']
+                        batch_label.extend([label])
+                        seq_features = []
+                        for fimg_path in seq_data['fimg']:
+                            fimg = open(fimg_path,'rb').read() 
+                            fimg = sess.run(frame, feed_dict={img_str: fimg})
+                            feature = sess.run(_feature, feed_dict={_input: [fimg], _train: False})
+                            seq_features.append(np.squeeze(feature))
+                        batch_features.append(np.stack(seq_features))
+                    np.save(event_np,{'data':batch_features, 'label':batch_label})
 
                 # batch_features = np.asanyarray(batch_features).reshape(batch, time_step, -1)
                 loss, _ = sess.run(( _loss, _train_op), feed_dict={_decoder_input: batch_features, _truth: batch_label})
                 total_loss = total_loss + loss
                 total_num = total_num + 1
+                if restart:
+                    break
 
             print('%d: mean loss : %f'%(epoch, total_loss/total_num))
 
