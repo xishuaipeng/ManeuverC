@@ -44,11 +44,44 @@ classdef Maneuverdata < Dataset
              fwrite(fid, sprintf('%s,%f,%s \n',cur_dir,score,descript));  
         end
         
-        function [cur_dir, score,descript] = decodeevent(line_ex)
+        function sample_event = event_statistic(sample_event, sample_data, event_field )
+                num_event = size(sample_event,1);
+                dataframe = sample_data.frame;
+                maxFrame =  max(dataframe);
+                for eventNum = 1: num_event  
+                    startFrame = sample_event.StartFrame(eventNum);
+                    endFrame = sample_event.EndFrame(eventNum);
+                    eventIndex = find(sample_event{eventNum,event_field} == 1);
+                    compIndex = min(1,dataframe - startFrame);
+                    compIndex(compIndex== 1) = - maxFrame;
+                    [~, startIdx_] = max(compIndex);
+                    %end index
+                    compIndex = max(-1,dataframe - endFrame);
+                    compIndex(compIndex == -1) =  maxFrame;
+                    [~, endIdx_] = min(compIndex);
+                    sample_event.StartsampleIndex(eventNum) = startIdx_;
+                    sample_event.LastsampleIndex(eventNum) = endIdx_; 
+                    sample_event.StartsampleFrme(eventNum) = dataframe(startIdx_);
+                    sample_event.LastsampleFrame(eventNum) = dataframe(endIdx_); 
+                    sample_event.Durationtime(eventNum)  = sample_data.time(endIdx_) - sample_data.time(startIdx_);
+                    sample_event.Durationdistance(eventNum)  =  sample_data.distance(endIdx_) - sample_data.distance(startIdx_);
+                    sample_event.Type(eventNum) = eventIndex;
+%                     sample_event.Index(eventNum) = eventNum;
+                end  
+            
+        end
+        function [cur_dir, score,descript,sindex, lindex] = decodeevent(line_ex)
             component = split(line_ex,',');
             cur_dir = component{1};
             score = str2num(component{2});
             descript = component{3};
+            if length(component)==3
+                sindex = -1;
+                lindex = -1;
+            elseif length(component)==5
+                sindex = str2num(component{4});
+                lindex = str2num(component{5});
+            end
         end
 
     end
@@ -164,33 +197,11 @@ classdef Maneuverdata < Dataset
             else
                 %function part 
                 sample_event= obj.readEvent();
-                num_event = size(sample_event,1);
-                dataframe = data.frame;
-                maxFrame =  max(dataframe);
-                for eventNum = 1: num_event  
-                    startFrame = sample_event.StartTime(eventNum);
-                    endFrame = sample_event.EndTime(eventNum);
-                    eventIndex = find(sample_event{eventNum,event_field} == 1);
-%                   eventIndex = find(event_frame(eventNum,event_field) == 1);
-                    compIndex = min(1,dataframe - startFrame);
-                    compIndex(compIndex== 1) = - maxFrame;
-                    [~, startIdx_] = max(compIndex);
-                    %end index
-                    compIndex = max(-1,dataframe - endFrame);
-                    compIndex(compIndex == -1) =  maxFrame;
-                    [~, endIdx_] = min(compIndex);
-                    sample_event.StartsampleIndex(eventNum) = startIdx_;
-                    sample_event.LastsampleIndex(eventNum) = endIdx_; 
-                    sample_event.StartsampleFrme(eventNum) = dataframe(startIdx_);
-                    sample_event.LastsampleFrame(eventNum) = dataframe(endIdx_); 
-                    sample_event.Durationtime(eventNum)  = data.time(endIdx_) - data.time(startIdx_);
-                    sample_event.Durationdistance(eventNum)  =  data.distance(endIdx_) - data.distance(startIdx_);
-                    sample_event.Type(eventNum) = eventIndex;
-                    sample_event.Index(eventNum) = eventNum;
-                end  
+                index = (1:size(sample_event,1));
+                sample_event = obj.event_statistic(sample_event, data, event_field );
+                sample_event.Index = index';
                 save(sample_event_path,'sample_event');
             end
-            
             event_checklist_path = obj.localParameters.Results.event_checklist_path;
             if ~exist(event_checklist_path,'file')
                 list_writer = fopen(event_checklist_path,'w+');
@@ -210,7 +221,7 @@ classdef Maneuverdata < Dataset
             end
         end  
         
-        function sample_event = load_resample_event(obj,sample_data)
+        function sample_event = load_resample_event(obj, data)
             %--------------------------------------------------------------
             % LOAD_RESAMPLE_EVENT: this function is to save
             % valid_sample_event data according to the checklist.list file
@@ -220,14 +231,15 @@ classdef Maneuverdata < Dataset
             %         sample_event = load_resample_event(obj,sample_data)
             %--------------------------------------------------------------                
             valid_sample_event_path = obj.localParameters.Results.valid_sample_event_path;
+            event_field = obj.localParameters.Results.event_field;
             if exist(valid_sample_event_path,'file')
                 clear sample_event;
                 load(valid_sample_event_path,'sample_event');
             else
                 event_checklist_path = obj.localParameters.Results.event_checklist_path;
                 sample_event_path = obj.localParameters.Results.sample_event_path;
-                if ~exist(event_checklist_path,'file')| ~exist(sample_event_path,'file')
-                    sample_event = obj.resample_event_from_data(sample_data);
+                if ~exist(event_checklist_path,'file') | ~exist(sample_event_path,'file')
+                    sample_event = obj.resample_event_from_data(data);
                 else
                     clear sample_event
                     load(sample_event_path,'sample_event'); 
@@ -241,7 +253,7 @@ classdef Maneuverdata < Dataset
                         continue;
                     end
                     index = index +1;
-                    [dirStr,score,description] = obj.decodeevent(tline);
+                    [dirStr,score,description,sindex, lindex] = obj.decodeevent(tline);
                     if score < 0.5
                         deleteRow = [deleteRow,index];
                         continue;
@@ -251,9 +263,14 @@ classdef Maneuverdata < Dataset
                         if strcmp(description,'NEEDCHECK')
                             display([dirStr,' is not chenked']);
                         end  
+                        if lindex~=-1 & sindex~=-1
+                           sample_event.StartFrame(index) = sindex;
+                           sample_event.EndFrame(index) = lindex;
+                        end
                     end
                 end
                  sample_event(deleteRow,:) = [];
+                 sample_event = obj.event_statistic(sample_event, data, event_field );
                  save(valid_sample_event_path,'sample_event');   
                  fclose(valid_reader);
             end
@@ -370,35 +387,22 @@ classdef Maneuverdata < Dataset
             event_data_dir = obj.localParameters.Results.event_data_dir;
             vidObj = VideoReader(videoPath);
             frameRate = obj.localParameters.Results.frameRate;
-            sample_event = obj.resample_event_from_data(sample_data);
+%             sample_event = obj.resample_event_from_data();
+            sample_event = obj.load_resample_event(sample_data); 
             valid_reader = fopen(event_checklist_path,'r');
             index = 0;
-            valid_event_num = zeros(1,size(event_field,2) );
-             while ~feof(valid_reader)
-                    tline = fgetl(valid_reader);
-                    if isempty(tline)
-                        continue;
-                    end
-                    index = index +1;
-                    [dirStr,score,description] = obj.decodeevent(tline);
-                    if score < 0.5
-                        continue;
-                    end
-                    dirStr = strip(replace(dirStr,'Event\',''));
-                    if strcmp(description,'NEEDCHECK')
-                        disp([dirStr,' is not checked']);
-                    end
-                    ei = split(dirStr,'_');
-                    ei = cellfun(@(x) strcmp(ei{2},x), event_field);
-                    valid_event_num(find(ei==1)) = valid_event_num (find(ei==1))+ 1;
-                    savePath = fullfile( event_data_dir,dirStr);
-                    mkdir_if_not_exist(savePath);
+            valid_event_num = size(sample_event,1) ;
+            for  i = 1: valid_event_num
+                    event_index = sample_event.Index(i);
+                    event_type = sample_event.Type(i);
+                    savePath = fullfile( event_data_dir, sprintf('%d_%d', event_index, event_type));
+                    mkdir_if_not_exist(savePath) 
                     matPath = fullfile(savePath, sprintf('%d_%d_%.1f.mat',start_padding,last_padding, 1000*samplingStep));
                     if exist(matPath,'file')
                         continue;     
                     end
-                    startFrame = sample_event.StartsampleIndex(index);
-                    endFrame = sample_event.LastsampleIndex(index);
+                    startFrame = sample_event.StartsampleIndex(i);
+                    endFrame = sample_event.LastsampleIndex(i);
                     startIdx = max(1,round(startFrame - start_padding));
                     endIdx = min(length(sample_data.frame), round(endFrame + last_padding));
                     if startIdx >= endIdx
@@ -425,16 +429,16 @@ classdef Maneuverdata < Dataset
                         else
                             imwrite(t_frame, fullfile(savePath,sprintf('%s/%d.jpg', 'frame',segFrame(frameIndex))));
                         end
-                    end
-                    close(segVidObj);
-             end
+                    end    
+                     close(segVidObj);  
+            end
              fclose(valid_reader);
              disp(sprintf('%s, duration:%f(s), distance:%f(m),#event:%d',data_id,session_duation,session_distance,sum(valid_event_num)));
-             str = '';
-             for i = 1:size(event_field,2)
-                str = sprintf(' %s  %s,%d',str, event_field{i},valid_event_num(i));
-             end
-             disp(str);
+%              str = '';
+%              for i = 1:size(event_field,2)
+%                 str = sprintf(' %s  %s,%d',str, event_field{i},valid_event_num(i));
+%              end
+%              disp(str);
         end
         
          function data = label_process(obj, data, task_type) 
