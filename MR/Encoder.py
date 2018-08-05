@@ -10,7 +10,7 @@ class Encoder:
         pass
     def load_model(self,model_path):
         pass
-    def back_bone(self,input_shape, model_path ):
+    def back_bone(self,input_shape ):
         pass
     
 class Resnet_v2_101(Encoder):
@@ -65,7 +65,7 @@ class Inception_v3(Encoder):
         is_train = tf.placeholder(tf.bool,shape=[], name='is_train_BN')
         with slim.arg_scope(arg_scope):
             # with slim.arg_scope():#[layers_lib.batch_norm, layers_lib.dropout],
-            _, end_points = slimNet.inception.inception_v3(inputs,10, is_training =is_train)
+            _, end_points = slimNet.inception.inception_v3(inputs,10, is_training =is_train, spatial_squeeze = False)
         self.end_points = end_points
         self.end_points['Inputs'] = inputs
         self.end_points['is_train']  = is_train

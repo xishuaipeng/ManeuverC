@@ -322,6 +322,9 @@ classdef Maneuverdata < Dataset
                     startIndex = event_frame.StartsampleIndex(i);
                     data_id =    obj.localParameters.Results.data_id;
                     lastIndex =  event_frame.LastsampleIndex(i);
+                    if lastIndex - startIndex > 300
+                       display(sprintf('Event %d (%d)is too long,please recheck!',i,(last_start_index - startPadding))); 
+                    end
                     eventIndex = event_frame.Index(i);
                     eventLabel = event_frame.Type(i);
                     startPadding = max(1,round(startIndex - start_padding));
@@ -332,6 +335,7 @@ classdef Maneuverdata < Dataset
                         display(sprintf('Event %d is too short,please recheck!',eventIndex));
                         continue;
                     end
+
                     if ~(sequence_start(end)==last_start_index)
                         sequence_start = [sequence_start,last_start_index];
                     end

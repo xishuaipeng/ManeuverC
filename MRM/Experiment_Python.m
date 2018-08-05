@@ -1,11 +1,15 @@
 clear,clc;
 close all;
 addpath('./DataClass', './DataClass/OBDExtraction','./Feature', './Evaluation','./Train','./Util')
-videoName = {'ID001_T001','ID001_T002','ID001_T003','ID001_T004',...
-            'ID001_T009','ID001_T010','ID001_T011','ID001_T012',...
+% 'ID001_T001','ID001_T002','ID001_T003','ID001_T004',...
+%             'ID001_T009','ID001_T010',
+videoName = {'ID001_T011','ID001_T012',...
             'ID001_T013','ID001_T014','ID001_T015','ID001_T016',...
             'ID001_T017','ID001_T018','ID001_T019'...
 };
+% ,'ID001_T011','ID001_T012',...
+%             'ID001_T013','ID001_T014','ID001_T015','ID001_T016',...
+%             'ID001_T017','ID001_T018','ID001_T019'
 data = [];
 label = [];
 tic;
@@ -39,8 +43,8 @@ for i =1:length(videoName)
     mat2np(out_path, videoName{i}, Mdata.localParameters.Results.videoPath, Mdata.localParameters.Results.load_feature)
     %Mdata.WriteEvent();
     %[statis ]= Mdata.eventSta(i);
-    data = [data;seqX];
-    label = [label;seqY];
+%     data = [data;seqX];
+%     label = [label;seqY];
 end
 toc;
 %%%%%%%%

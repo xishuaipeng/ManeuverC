@@ -60,8 +60,8 @@ class TRI (Base_data):
             event_list = []
             evt_path = os.path.join(self.data_dir,sid,'Pydata') 
             evt_list = os.listdir(evt_path)
-            evt_list = list(map(lambda x, y=evt_path: os.path.join(y,x), evt_list) ) 
-            evt_list = list(filter(lambda x:  os.path.isdir(x),evt_list))
+            evt_list = list(map(lambda x, y= evt_path: os.path.join(y,x), evt_list) ) 
+            evt_list = list(filter(lambda x:  os.path.isdir(x) &  os.path.basename(x).isdigit()   ,evt_list))
             evt_list = sorted(evt_list, key = lambda x: int(re.findall('\d+',x)[-1]) )
             # event_list.extend(evt_list)     
             self.print('Find total %d events in session-%s'%(len(evt_list), sid ))
@@ -85,6 +85,7 @@ class TRI (Base_data):
                 mat_path = value
         assert (not mat_path=='')
         assert (os.path.isfile(mat_path) & mat_path.endswith('mat'))
+        evt_location = os.path.dirname(mat_path)
         data = hdf5storage.loadmat(mat_path)['seq_struct']
         data_field = ['frame', 'signal','path','label','session']
         frame_list = np.squeeze(data['frame'].astype(np.int)).tolist()
@@ -93,8 +94,14 @@ class TRI (Base_data):
         front_img_list = list(map(lambda x, y = frame_path: os.path.join(y,'%d_f.jpg'%x) , frame_list))
         driver_img_list = list(map(lambda x, y = frame_path: os.path.join(y,'%d_d.jpg'%x) , frame_list))
         signal = np.squeeze(data['signal']) 
-        label = np.squeeze(data['label']['sequenceLabel']).tolist()
-        dic = {'fimg':front_img_list,'dimg':driver_img_list,'signal': signal, 'label':label,'mat_path':mat_path}
+        # The label information 
+        label = data['label']
+        seq_label = np.squeeze(label['sequenceLabel']).tolist()
+        evt_label = np.squeeze(label['eventLabel']).tolist()
+        early_time = np.squeeze(label['event_start_time']).tolist()  -  np.squeeze(label['seq_end_time']).tolist()
+        early_distance = np.squeeze(label['event_start_distance']).tolist()   -  np.squeeze(label['seq_end_distance']).tolist() 
+        dic = {'fimg':front_img_list, 'dimg':driver_img_list,'signal': signal, 'seq_label':seq_label, 'id': evt_location, \
+        'evt_label': evt_label, 'early_time': early_time, 'early_distance': early_distance}
         return dic
 
 
@@ -122,9 +129,20 @@ class TRI (Base_data):
             cur_path = self.evt_seq[evt_index]
         
         loop_data = []
+        _num = os.path.basename(os.path.dirname(cur_path[0]))
+        _id = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(cur_path[0]))))
         for mat_path in cur_path:
             loop_data.append(self._decode(mat_path = mat_path))
-        return  loop_data, len(self.loop_list)==0 , evt_index
+        return  loop_data, len(self.loop_list)==0 , evt_index, '%s_%s'%(_id, _num)
+
+    def event_list(self):
+        if self.n_evt == 0:
+            self._encode(unit='evt')
+        loop_list = np.arange(self.n_evt)
+        np.random.shuffle(loop_list)
+        return loop_list
+        
+        
 
 def data_factory(name, **kwargs):
     if name == 'TRI':
